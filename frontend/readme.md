@@ -1,4 +1,4 @@
-Gemini said
+
 This is a comprehensive README.md designed to impress interviewers. It covers the technical stack, the architecture (including the logic we built for Admin-User separation), and the security features like the persistent login and the password reset flow.
 
 📝 Attendo | Smart Attendance Management System
