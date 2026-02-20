@@ -1,0 +1,18 @@
+@import "tailwindcss";
+
+/* Ensure the app takes up the full screen and uses a clean background */
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 100vh;
+  background-color: white; /* This fixes the black bars */
+}
+
+/* Optional: Smooth scrolling for the whole page */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Remove all the :root color-scheme and background-color settings 
+   that were causing the 'floating box' effect */
