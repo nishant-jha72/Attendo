@@ -11,12 +11,19 @@ const AdminAuth = () => {
     
     // 1. Here you will eventually call your Backend API
     // 2. If successful, redirect to the Admin Dashboard
+  
+  // Simulate successful login
+  localStorage.setItem('isLoggedIn', 'true');
+  localStorage.setItem('userRole', 'admin'); 
+
+   // Refresh to update the Navbar state immediately
     if (isLogin) {
       navigate('/admin-dashboard'); 
     } else {
       // If they just registered, maybe send them to login or dashboard
       navigate('/admin-auth?mode=login');
     }
+    window.location.reload();
   };
 
   return (

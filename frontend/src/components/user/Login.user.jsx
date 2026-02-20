@@ -5,10 +5,15 @@ const UserLogin = () => {
   const navigate = useNavigate();
 
   const handleUserSubmit = (e) => {
-    e.preventDefault();
-    // In a real app, you'd verify credentials here
-    navigate('/user-dashboard');
-  };
+  e.preventDefault();
+  
+  // Simulate successful login
+  localStorage.setItem('isLoggedIn', 'true');
+  localStorage.setItem('userRole', 'user'); 
+  
+  navigate('/user-dashboard');
+  window.location.reload(); // Refresh to update the Navbar state immediately
+};
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-slate-50 p-6">

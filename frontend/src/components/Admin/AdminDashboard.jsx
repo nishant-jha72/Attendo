@@ -1,109 +1,132 @@
 import React, { useState } from 'react';
-// LOVELY ADMIN DASHBOARD COMPONENT
+import { useNavigate } from 'react-router-dom';
+import AdminUserRegistration from './UserRegistration.admin'; // Ensure filename matches
+
 const AdminDashboard = () => {
-  // Mock Data (This will eventually come from your Backend API)
+  const navigate = useNavigate(); // REQUIRED to use navigate()
+
+  // 1. DUMMY DATA (Expanded with your new requirements)
   const [users, setUsers] = useState([
-    { id: 1, name: "Alice Johnson", email: "alice@co.com", branch: "New York", project: "Alpha", joinDate: "2023-01-10", salary: "$5000", present: 240, absent: 5 },
-    { id: 2, name: "Bob Smith", email: "bob@co.com", branch: "London", project: "Beta", joinDate: "2023-03-15", salary: "$4800", present: 210, absent: 12 },
+    { 
+      id: 1, 
+      name: "Aryan Sharma", 
+      email: "aryan@co.com", 
+      position: "Senior Dev", 
+      salary: "75000", 
+      phone: "+91 9876543210",
+      branch: "Noida", 
+      project: "Banking App", 
+      joinDate: "2024-01-10", 
+      present: 45, 
+      absent: 2,
+      img: "https://i.pravatar.cc/150?u=1" 
+    },
+    { 
+      id: 2, 
+      name: "Sneha Kapoor", 
+      email: "sneha@co.com", 
+      position: "UI Designer", 
+      salary: "65000", 
+      phone: "+91 8877665544",
+      branch: "Delhi", 
+      project: "E-comm", 
+      joinDate: "2024-02-15", 
+      present: 30, 
+      absent: 0,
+      img: "https://i.pravatar.cc/150?u=2" 
+    },
   ]);
 
   const [showAddModal, setShowAddModal] = useState(false);
 
   const removeUser = (id) => {
-    setUsers(users.filter(user => user.id !== id));
+    if(window.confirm("Are you sure you want to remove this employee?")) {
+        setUsers(users.filter(user => user.id !== id));
+    }
   };
 
   return (
-    <div className="p-4 md:p-8 bg-slate-50 min-h-screen">
+    <div className="p-4 md:p-10 bg-slate-50 min-h-screen">
       <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-2xl font-bold text-slate-800">Admin Management Console</h1>
+        
+        {/* Header Section */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
+          <div>
+            <h1 className="text-3xl font-black text-slate-800 tracking-tight">Team Management</h1>
+            <p className="text-slate-500 font-medium">Manage employee records and attendance precision.</p>
+          </div>
           <button 
             onClick={() => setShowAddModal(true)}
-            className="bg-indigo-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-indigo-700 transition"
+            className="bg-indigo-600 text-white px-8 py-3 rounded-2xl font-bold hover:bg-indigo-700 transition shadow-lg shadow-indigo-100 flex items-center gap-2"
           >
-            + Add New User
+            <span className="text-xl">+</span> Add New Employee
           </button>
         </div>
 
         {/* --- USER TABLE --- */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-slate-50 border-b border-slate-200">
-                <th className="p-4 text-xs font-bold text-slate-500 uppercase">Employee</th>
-                <th className="p-4 text-xs font-bold text-slate-500 uppercase">Branch & Project</th>
-                <th className="p-4 text-xs font-bold text-slate-500 uppercase">Joining Date</th>
-                <th className="p-4 text-xs font-bold text-slate-500 uppercase">Salary</th>
-                <th className="p-4 text-xs font-bold text-slate-500 uppercase">Attendance (P/A)</th>
-                <th className="p-4 text-xs font-bold text-slate-500 uppercase">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map((user) => (
-                <tr key={user.id} className="border-b border-slate-100 hover:bg-slate-50 transition">
-                  <td className="p-4">
-                    <div className="font-bold text-slate-800">{user.name}</div>
-                    <div className="text-sm text-slate-500">{user.email}</div>
-                  </td>
-                  <td className="p-4 text-sm text-slate-600">
-                    <span className="block font-medium">{user.branch}</span>
-                    <span className="text-xs text-indigo-500 font-bold">{user.project}</span>
-                  </td>
-                  <td className="p-4 text-sm text-slate-600">{user.joinDate}</td>
-                  <td className="p-4 font-bold text-green-600">{user.salary}</td>
-                  <td className="p-4">
-                    <span className="text-green-600 font-bold">{user.present}d</span> / 
-                    <span className="text-red-500 font-bold ml-1">{user.absent}d</span>
-                  </td>
-                  <td className="p-4">
-                    <button 
-                      onClick={() => removeUser(user.id)}
-                      className="text-red-500 hover:text-red-700 font-bold text-sm"
-                    >
-                      Remove
-                    </button>
-                  </td>
+        <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-slate-50/50 border-b border-slate-100">
+                  <th className="p-5 text-xs font-bold text-slate-400 uppercase tracking-widest">Employee Info</th>
+                  <th className="p-5 text-xs font-bold text-slate-400 uppercase tracking-widest">Role & Project</th>
+                  <th className="p-5 text-xs font-bold text-slate-400 uppercase tracking-widest">Salary</th>
+                  <th className="p-5 text-xs font-bold text-slate-400 uppercase tracking-widest">Attendance</th>
+                  <th className="p-5 text-xs font-bold text-slate-400 uppercase tracking-widest text-center">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {users.map((user) => (
+                  <tr key={user.id} className="hover:bg-slate-50/80 transition-colors group">
+                    <td className="p-5">
+                      <div className="flex items-center gap-4">
+                        <img src={user.img} alt="" className="w-12 h-12 rounded-full border-2 border-white shadow-sm" />
+                        <div>
+                          <div className="font-bold text-slate-800">{user.name}</div>
+                          <div className="text-xs text-slate-500">{user.email}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="p-5">
+                      <div className="text-sm font-bold text-slate-700">{user.position}</div>
+                      <div className="text-xs text-indigo-500 font-medium uppercase tracking-tighter">{user.project}</div>
+                    </td>
+                    <td className="p-5">
+                      <div className="text-sm font-black text-slate-800">₹{user.salary}</div>
+                      <div className="text-[10px] text-slate-400 font-bold uppercase">{user.branch}</div>
+                    </td>
+                    <td className="p-5">
+                      <div className="flex items-center gap-2">
+                        <span className="px-2 py-1 bg-green-50 text-green-600 rounded-md text-xs font-bold">P: {user.present}</span>
+                        <span className="px-2 py-1 bg-red-50 text-red-600 rounded-md text-xs font-bold">A: {user.absent}</span>
+                      </div>
+                    </td>
+                    <td className="p-5 text-center">
+                      <button 
+                        onClick={() => removeUser(user.id)}
+                        className="p-2 text-slate-300 hover:text-red-500 transition-colors"
+                        title="Remove User"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
-      {/* --- ADD USER MODAL --- */}
+      {/* --- RENDER THE REGISTRATION MODAL --- */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[100]">
-          <div className="bg-white rounded-3xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
-            <h2 className="text-2xl font-bold mb-6">Register New User</h2>
-            <form className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <input type="text" placeholder="Full Name" className="p-3 border rounded-xl bg-slate-50" />
-              <input type="email" placeholder="Email Address" className="p-3 border rounded-xl bg-slate-50" />
-              <input type="text" placeholder="Branch" className="p-3 border rounded-xl bg-slate-50" />
-              <input type="text" placeholder="Assigned Project" className="p-3 border rounded-xl bg-slate-50" />
-              <div className="flex flex-col">
-                <label className="text-xs font-bold text-slate-400 mb-1 ml-1">Joining Date</label>
-                <input type="date" className="p-3 border rounded-xl bg-slate-50" />
-              </div>
-              <input type="number" placeholder="Salary" className="p-3 border rounded-xl bg-slate-50" />
-              <div className="md:col-span-2 flex gap-4 mt-6">
-                <button 
-                  type="submit"
-                  className="flex-1 bg-indigo-600 text-white py-3 rounded-xl font-bold"
-                >
-                  Confirm Registration
-                </button>
-                <button 
-                  type="button"
-                  onClick={() => setShowAddModal(false)}
-                  className="flex-1 bg-slate-100 text-slate-600 py-3 rounded-xl font-bold"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+        <AdminUserRegistration 
+          onClose={() => setShowAddModal(false)} 
+          // You can pass a function here to update the user list later
+        />
       )}
     </div>
   );

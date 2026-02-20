@@ -8,6 +8,7 @@ import UserLogin from './components/user/Login.user';
 import Navbar from './components/Navbar';
 import AdminDashboard from './components/Admin/AdminDashboard';
 import UserDashboard from './components/user/UserDashboard';
+import AdminUserRegistration from './components/Admin/UserRegistration.admin';
 function App() {
   return (
     <Router>
@@ -19,6 +20,7 @@ function App() {
         <Route path="/user-login" element={<UserLogin />} />
         <Route path="/admin-dashboard" element={<AdminDashboard />} />
         <Route path="/user-dashboard" element={<UserDashboard />} />
+        <Route path="/admin-userRegistration" element={<AdminUserRegistration />} />
         <Route path="*" element={
           <div className="flex items-center justify-center h-screen font-bold">
             404 - Page Not Found
