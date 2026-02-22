@@ -22,13 +22,20 @@ const adminSchema = new Schema(
         role: {
             type: String,
             default: "ADMIN"
+        },
+        isEmailVerified: {
+            type: Boolean,
+            default: false
+        },
+        emailVerificationToken: {
+            type: String
         }
     },
     { timestamps: true }
 );
 
 adminSchema.pre("save", async function (next) {
-    if(!this.isModified("password")) return next();
+    if(!this.isModified("password")) return;
     this.password = await bcrypt.hash(this.password, 10);
     
 });

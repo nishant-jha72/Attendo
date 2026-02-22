@@ -17,10 +17,10 @@ const userSchema = new Schema(
             lowercase: true,
             trim: true,
         },
-        // profilePicture: {
-        //     type: String, // Cloudinary or AWS S3 URL
-        //     required: true,
-        // },
+        profilePicture: {
+            type: String, // Cloudinary or AWS S3 URL
+            required: true,
+        },
         position: {
             type: String,
             required: true,
@@ -57,13 +57,11 @@ const userSchema = new Schema(
 );
 
 // Encrypt password before saving
-userSchema.pre("save", async function (next) {
-    if(!this.isModified("password")) return next();
+userSchema.pre("save", async function () {
+    if (!this.isModified("password")) return;
 
     this.password = await bcrypt.hash(this.password, 10);
-    next();
 });
-
 // Method to check if password is correct
 userSchema.methods.isPasswordCorrect = async function(password){
     return await bcrypt.compare(password, this.password);

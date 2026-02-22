@@ -1,8 +1,9 @@
 import dotenv from 'dotenv';
+dotenv.config({ path: "./.env" });
 import connectDB from './src/db/index.js'; // Import the function to connect to MongoDB
 import { app } from './app.js'; // Import the app you configured with all middlewares
 
-dotenv.config();
+
 
 // Define a root route for health check directly in the main file if you prefer
 app.get("/", (req, res) => {
