@@ -33,13 +33,14 @@ const registerAdmin = asyncHandler(async (req, res) => {
 
     // 📧 Send verification email
     await sendVerificationEmail(email, emailVerificationToken);
-
-    return res.status(201).json(
-        new ApiResponse(
-            201,
-            {},
-            "Admin registered successfully. Please verify your email."
-        )
+    const options = {
+    httpOnly: true,
+    secure: true, // Required for HTTPS
+    sameSite: 'None', // Required for cross-origin (Frontend on Vercel, Backend on Render)
+    maxAge: 24 * 60 * 60 * 1000 // 1 day
+};
+    return res.status(201).cookie("emailVerificationToken", emailVerificationToken, options).json(
+        new ApiResponse(201, {}, "Admin registered successfully. Please verify your email.")
     );
 });
 
@@ -97,14 +98,15 @@ const loginAdmin = asyncHandler(async (req, res) => {
 }
 
   const accessToken = admin.generateAccessToken();
-
-  return res
-    .status(200)
-    .cookie("accessToken", accessToken, {
-      httpOnly: true,
-      secure: true,
-    })
-    .json(new ApiResponse(200, { accessToken }, "Admin logged in successfully"));
+  const options = {
+    httpOnly: true,
+    secure: true, // Required for HTTPS
+    sameSite: 'None', // Required for cross-origin (Frontend on Vercel, Backend on Render)
+    maxAge: 24 * 60 * 60 * 1000 // 1 day
+};
+  return res.status(200).cookie("accessToken", accessToken, options).json(
+    new ApiResponse(200, { accessToken }, "Admin logged in successfully"),
+  );
 });
 
 
@@ -126,4 +128,26 @@ const verifyEmail = asyncHandler(async (req, res) => {
     );
 });
 
-export { registerAdmin, registerEmployee, loginAdmin, verifyEmail };
+const logoutAdmin = asyncHandler(async (req, res) => {
+    res.clearCookie("accessToken", {
+        httpOnly: true,
+        secure: true, // Required for HTTPS
+        sameSite: 'None', // Required for cross-origin
+    });
+    return res.status(200).json(new ApiResponse(200, {}, "Admin logged out successfully"));
+});
+
+const getAllEmployees = asyncHandler(async (req, res) => {
+    const employees = await User.find().select("-password");
+
+    if (!employees || employees.length === 0) {
+        throw new ApiError(404, "No employees found");
+    }
+
+    // 2. Return the data
+    return res
+        .status(200)
+        .json(new ApiResponse(200, employees, "Employees fetched successfully"));
+});
+
+export { registerAdmin, registerEmployee, loginAdmin, verifyEmail, logoutAdmin , getAllEmployees};

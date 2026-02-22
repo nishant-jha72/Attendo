@@ -1,66 +1,74 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import API from '../api/axios'; // Import your axios instance
 
 const Navbar = () => {
   const navigate = useNavigate(); 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   
-  // 1. CHECK LOGIN STATUS
-  // We check localStorage to see if a user session exists
+  // 1. Auth State from LocalStorage
   const [isLoggedIn, setIsLoggedIn] = useState(localStorage.getItem('isLoggedIn') === 'true');
+  const userRole = localStorage.getItem('userRole');
 
-  // Listen for storage changes (helps if login happens in another component)
   useEffect(() => {
     const checkAuth = () => {
       setIsLoggedIn(localStorage.getItem('isLoggedIn') === 'true');
     };
+    // Sync across tabs
     window.addEventListener('storage', checkAuth);
     return () => window.removeEventListener('storage', checkAuth);
   }, []);
 
-  // 2. LOGOUT FUNCTION
-  const handleLogout = () => {
-    localStorage.removeItem('isLoggedIn');
-    localStorage.removeItem('userRole'); // Optional: clean up role
-    setIsLoggedIn(false);
-    navigate('/'); // Send back to landing page
+  // 2. PRODUCTION LOGOUT FUNCTION
+  const handleLogout = async () => {
+    try {
+      // Determine which logout endpoint to hit
+      const logoutEndpoint = userRole === 'admin' ? '/admin/logout' : '/users/logout';
+      
+      // Call Backend to clear cookies
+      await API.post(logoutEndpoint);
+      
+    } catch (error) {
+      console.error("Logout API failed, clearing local state anyway:", error);
+    } finally {
+      // Always clear local state even if the network fails
+      localStorage.removeItem('isLoggedIn');
+      localStorage.removeItem('userRole');
+      setIsLoggedIn(false);
+      navigate('/'); 
+      // Force a clean state refresh
+      window.location.reload(); 
+    }
   };
 
-  const goToAdminLogin = () => {
-    navigate('/admin-auth?mode=login');
-    setIsDropdownOpen(false);
+  // Helper for logo click navigation
+  const handleLogoClick = () => {
+    if (!isLoggedIn) return navigate('/');
+    navigate(userRole === 'admin' ? '/admin-dashboard' : '/user-dashboard');
   };
 
-  const goToAdminRegister = () => {
-    navigate('/admin-auth?mode=register');
-    setIsDropdownOpen(false);
-  };
-
-  const goToUserLogin = () => {
-    navigate('/user-login');
-    setIsDropdownOpen(false);
-  };
+  // Navigation helpers
+  const goToAdminLogin = () => { navigate('/admin-auth?mode=login'); setIsDropdownOpen(false); };
+  const goToAdminRegister = () => { navigate('/admin-auth?mode=register'); setIsDropdownOpen(false); };
+  const goToUserLogin = () => { navigate('/user-login'); setIsDropdownOpen(false); };
 
   return (
     <>
       {isDropdownOpen && (
-        <div 
-          className="fixed inset-0 z-40 bg-transparent cursor-default" 
-          onClick={() => setIsDropdownOpen(false)}
-        ></div>
+        <div className="fixed inset-0 z-40 bg-transparent cursor-default" onClick={() => setIsDropdownOpen(false)}></div>
       )}
 
       <nav className="w-full bg-white border-b border-slate-100 px-4 md:px-12 py-4 flex justify-between items-center sticky top-0 z-50">
         <div 
           className="text-2xl md:text-3xl font-black text-indigo-600 tracking-tighter cursor-pointer"
-          onClick={() => navigate('/')}
+          onClick={handleLogoClick}
         >
           Attendo
         </div>
 
         <div className="flex items-center space-x-3 md:space-x-8">
           
-          {/* Only show Mark Attendance if not logged in or logged in as User */}
+          {/* Show 'Mark Attendance' only for guests */}
           {!isLoggedIn && (
             <button 
               onClick={() => navigate('/user-login')}
@@ -69,8 +77,8 @@ const Navbar = () => {
               Mark Attendance
             </button>
           )}
-          
-          {/* 3. CONDITIONAL RENDERING: DROPDOWN vs LOGOUT */}
+
+          {/* Conditional Rendering: Portal Access vs Logout */}
           {!isLoggedIn ? (
             <div className="relative z-50">
               <button 
@@ -88,7 +96,7 @@ const Navbar = () => {
               </button>
 
               {isDropdownOpen && (
-                <div className="absolute right-0 mt-3 w-64 bg-white border border-slate-200 rounded-2xl shadow-2xl py-2 overflow-hidden">
+                <div className="absolute right-0 mt-3 w-64 bg-white border border-slate-200 rounded-2xl shadow-2xl py-2 overflow-hidden animate-in fade-in slide-in-from-top-2">
                   <div className="px-4 py-2 border-b border-slate-100">
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Administrative</span>
                     <button onClick={goToAdminLogin} className="block w-full text-left py-2 text-sm font-semibold hover:text-indigo-600 transition">Admin Login</button>
@@ -102,13 +110,21 @@ const Navbar = () => {
               )}
             </div>
           ) : (
-            /* SHOW LOGOUT BUTTON WHEN LOGGED IN */
-            <button 
-              onClick={handleLogout}
-              className="bg-red-50 text-red-600 px-6 py-2 rounded-full font-bold hover:bg-red-100 transition-all border border-red-100 shadow-sm"
-            >
-              Logout
-            </button>
+            <div className="flex items-center gap-4">
+               {/* Dashboard Link for logged in users */}
+               <button 
+                onClick={handleLogoClick}
+                className="text-slate-500 text-sm font-bold hover:text-indigo-600 hidden md:block"
+              >
+                Dashboard
+              </button>
+              <button 
+                onClick={handleLogout}
+                className="bg-red-50 text-red-600 px-6 py-2 rounded-full font-bold hover:bg-red-100 transition-all border border-red-100 shadow-sm"
+              >
+                Logout
+              </button>
+            </div>
           )}
         </div>
       </nav>

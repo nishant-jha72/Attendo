@@ -2,6 +2,7 @@ import { asyncHandler } from "../utils/asyncHandler.utils.js";
 import { ApiError } from "../utils/ApiError.util.js";
 import { ApiResponse } from "../utils/ApiResponse.utils.js";
 import { User } from "../models/user.model.js";
+import { TopologyDescriptionChangedEvent } from "mongodb";
 
 // --- User Login ---
 const loginUser = asyncHandler(async (req, res) => {
@@ -15,8 +16,14 @@ const loginUser = asyncHandler(async (req, res) => {
 
     const accessToken = user.generateAccessToken();
 
+    user.password = undefined;
     // Set cookie for security
-    const options = { httpOnly: true, secure: true };
+    const options = {
+    httpOnly: true,
+    secure: true, // Required for HTTPS
+    sameSite: 'None', // Required for cross-origin (Frontend on Vercel, Backend on Render)
+    maxAge: 24 * 60 * 60 * 1000 // 1 day
+};
 
     return res.status(200)
         .cookie("accessToken", accessToken, options)
@@ -55,4 +62,14 @@ const updateUserPassword = asyncHandler(async (req, res) => {
     );
 });
 
-export { loginUser, markAttendance, updateUserPassword };
+const logoutUser = asyncHandler(async (req, res) => {
+    res.clearCookie("accessToken", {
+        httpOnly: true,
+        secure: true, // Required for HTTPS
+        sameSite: 'None', // Required for cross-origin
+    });
+    return res.status(200).json(new ApiResponse(200, {}, "User logged out successfully"));
+});  
+
+
+export { loginUser, markAttendance, updateUserPassword, logoutUser };

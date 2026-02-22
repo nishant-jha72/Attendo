@@ -1,34 +1,42 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-
-// Import your components (adjust paths based on your folder structure)
-import LandingPage from './components/LandingPage';
-import AdminAuth from './components/Admin/LoginAuth.admin';
-import UserLogin from './components/user/Login.user';
-import Navbar from './components/Navbar';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import ProtectedRoute from './components/ProtectedRoutes';
 import AdminDashboard from './components/Admin/AdminDashboard';
 import UserDashboard from './components/user/UserDashboard';
-import AdminUserRegistration from './components/Admin/UserRegistration.admin';
+import AdminAuth from './components/Admin/LoginAuth.admin';
+import UserLogin from './components/user/Login.user';
+import LandingPage from './components/LandingPage';
+import Navbar from './components/Navbar';
 function App() {
   return (
-    <Router>
+    <BrowserRouter>
       <Navbar />
       <Routes>
+        {/* Public Routes */}
+        <Route path="/admin-auth" element={<AdminAuth />} />
+        <Route path="/user-auth" element={<UserLogin />} />
         <Route path="/" element={<LandingPage />} />
 
-        <Route path="/admin-auth" element={<AdminAuth />} />
-        <Route path="/user-login" element={<UserLogin />} />
-        <Route path="/admin-dashboard" element={<AdminDashboard />} />
-        <Route path="/user-dashboard" element={<UserDashboard />} />
-        <Route path="/admin-userRegistration" element={<AdminUserRegistration />} />
-        <Route path="*" element={
-          <div className="flex items-center justify-center h-screen font-bold">
-            404 - Page Not Found
-          </div>
-        } />
+        {/* Protected Admin Routes */}
+        <Route 
+          path="/admin-dashboard" 
+          element={
+            <ProtectedRoute allowedRole="admin">
+              <AdminDashboard />
+            </ProtectedRoute>
+          } 
+        />
+
+        {/* Protected User Routes */}
+        <Route 
+          path="/user-dashboard" 
+          element={
+            <ProtectedRoute allowedRole="user">
+              <UserDashboard />
+            </ProtectedRoute>
+          } 
+        />
       </Routes>
-    </Router>
+    </BrowserRouter>
   );
 }
-
 export default App;
