@@ -5,13 +5,15 @@ import { Admin } from "../models/admin.models.js";
 import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.utils.js";
 import crypto from "crypto";
-import { sendVerificationEmail } from "../utils/sendEmails.js";
+import { sendVerificationEmail  , sendPassowrdEmail} from "../utils/sendEmails.js"; 
 
 const registerAdmin = asyncHandler(async (req, res) => {
-    const { organizationName, email, password } = req.body;
+    // 1. Get details from body (including new fields)
+    const { organizationName, email, password, salary, gender, age } = req.body;
 
+    // 2. Validation
     if (!organizationName || !email || !password) {
-        throw new ApiError(400, "All fields are required");
+        throw new ApiError(400, "Organization name, email, and password are required");
     }
 
     const existedAdmin = await Admin.findOne({ email });
@@ -19,29 +21,48 @@ const registerAdmin = asyncHandler(async (req, res) => {
         throw new ApiError(409, "Admin already exists");
     }
 
-    // 🔐 Generate email verification token
-    const emailVerificationToken = crypto.randomBytes(32).toString("hex");
+    // 3. Handle Profile Picture Upload
+    const profilePicLocalPath = req.file?.path;
+    if (!profilePicLocalPath) {
+        throw new ApiError(400, "Profile picture is required");
+    }
 
-    // 👇 Create admin but not verified yet
+    const profilePicture = await uploadOnCloudinary(profilePicLocalPath);
+    if (!profilePicture) {
+        throw new ApiError(400, "Error while uploading profile picture to Cloudinary");
+    }
+
+    // 4. Generate email verification token
+    const emailVerificationToken = crypto.randomBytes(32).toString("hex");
     const admin = await Admin.create({
         organizationName,
         email,
         password,
+        salary,
+        gender,
+        age,
+        profilePic: profilePicture.url, // Store the Cloudinary URL
         emailVerificationToken,
         isEmailVerified: false
     });
 
-    // 📧 Send verification email
-    await sendVerificationEmail(email, emailVerificationToken);
+    // 6. Send verification email
     const options = {
-    httpOnly: true,
-    secure: true, // Required for HTTPS
-    sameSite: 'None', // Required for cross-origin (Frontend on Vercel, Backend on Render)
-    maxAge: 24 * 60 * 60 * 1000 // 1 day
-};
-    return res.status(201).cookie("emailVerificationToken", emailVerificationToken, options).json(
-        new ApiResponse(201, {}, "Admin registered successfully. Please verify your email.")
-    );
+        httpOnly: true,
+        secure: true, 
+        sameSite: 'None', 
+        maxAge: 24 * 60 * 60 * 1000 
+    };
+
+    // Return response without sensitive data
+    const createdAdmin = await Admin.findById(admin._id).select("-password -emailVerificationToken");
+
+    return res
+        .status(201)
+        .cookie("emailVerificationToken", emailVerificationToken, options)
+        .json(
+            new ApiResponse(201, createdAdmin, "Admin registered successfully. Please verify your email.")
+        );
 });
 
 
@@ -63,16 +84,20 @@ const registerEmployee = asyncHandler(async (req, res) => {
   const profilePicture = await uploadOnCloudinary(profilePicLocalPath);
   if (!profilePicture) throw new ApiError(400, "Error while uploading image");
 
+    const generatedPassword = generatePassword(8); // Generate a random password for the employee
   const user = await User.create({
     name,
     email,
-    password, 
+    password: generatedPassword, 
     position,
     salary,
     address,
     phoneNumber,
     profilePicture: profilePicture.url,
   });
+   await sendPassowrdEmail(email, generatedPassword);
+  // Send the generated password to the employee's email (simulated)
+  await sendPassowrdEmail(email, generatedPassword);
 
   return res
     .status(201)
@@ -141,7 +166,7 @@ const getAllEmployees = asyncHandler(async (req, res) => {
     const employees = await User.find().select("-password");
 
     if (!employees || employees.length === 0) {
-        throw new ApiError(404, "No employees found");
+        return res.status(200).json(new ApiResponse(200, [], "No employees found"));
     }
 
     // 2. Return the data
@@ -150,4 +175,36 @@ const getAllEmployees = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, employees, "Employees fetched successfully"));
 });
 
-export { registerAdmin, registerEmployee, loginAdmin, verifyEmail, logoutAdmin , getAllEmployees};
+const getMyProfile = asyncHandler(async (req, res) => {
+    // Check if middleware actually populated req.user
+    if (!req.user) {
+        throw new ApiError(401, "Invalid Admin Session");
+    }
+
+    const admin = await Admin.findById(req.user._id).select("-password");
+
+    if (!admin) {
+        throw new ApiError(404, "Admin not found");
+    }
+
+    return res.status(200).json(
+        new ApiResponse(200, admin, "Admin profile fetched successfully")
+    );
+});
+
+
+const generatePassword = (length = 8) => {
+  const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+";
+  let password = "";
+  
+  // Generate random bytes
+  const bytes = crypto.randomBytes(length);
+
+  for (let i = 0; i < length; i++) {
+    // bytes[i] gives us a number between 0-255
+    password += charset[bytes[i] % charset.length];
+  }
+
+  return password;
+};
+export { registerAdmin, registerEmployee, loginAdmin, verifyEmail, logoutAdmin , getAllEmployees , getMyProfile};

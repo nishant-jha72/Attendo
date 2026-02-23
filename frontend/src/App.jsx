@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoutes';
 import AdminDashboard from './components/Admin/AdminDashboard';
 import UserDashboard from './components/user/UserDashboard';
@@ -6,15 +6,16 @@ import AdminAuth from './components/Admin/LoginAuth.admin';
 import UserLogin from './components/user/Login.user';
 import LandingPage from './components/LandingPage';
 import Navbar from './components/Navbar';
+
 function App() {
   return (
     <BrowserRouter>
       <Navbar />
       <Routes>
         {/* Public Routes */}
+        <Route path="/" element={<LandingPage />} />
         <Route path="/admin-auth" element={<AdminAuth />} />
         <Route path="/user-auth" element={<UserLogin />} />
-        <Route path="/" element={<LandingPage />} />
 
         {/* Protected Admin Routes */}
         <Route 
@@ -35,8 +36,12 @@ function App() {
             </ProtectedRoute>
           } 
         />
+
+        {/* Catch-all for 404s */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );
 }
+
 export default App;

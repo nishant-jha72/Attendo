@@ -1,22 +1,37 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdminUserRegistration from './UserRegistration.admin'; 
+import EmployeeDetailView from './EmployeeDetailView'; 
 import API from '../../api/axios';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const [showAddModal, setShowAddModal] = useState(false);
-  const [users, setUsers] = useState([]); // State to store employee list
+  const [users, setUsers] = useState([]); 
   const [loading, setLoading] = useState(true);
+  const [selectedUser, setSelectedUser] = useState(null);
 
-  // 1. Fetch Employees on Component Mount
   const fetchEmployees = async () => {
   try {
+    setLoading(true);
     const response = await API.get('/admin/employees'); 
-    // response.data.data will contain the array of employee objects
-    setUsers(response.data.data); 
+    
+    // If backend is fixed to return 200 and [], this will run
+    if (response.data && response.data.data) {
+      setUsers(response.data.data); 
+    }
   } catch (error) {
-    console.error("Fetch Error:", error.response?.data?.message);
+    // This only runs if the request actually FAILS (404, 500, etc.)
+    console.error("Error fetching employees:", error);
+    
+    // Check if it's a 404 (Not Found) specifically
+    if (error.response?.status === 404) {
+       setUsers([]); // Clear users if not found
+    } else {
+       alert("Server error. Please try again later.");
+    }
+  } finally {
+    setLoading(false); 
   }
 };
 
@@ -24,27 +39,25 @@ const AdminDashboard = () => {
     fetchEmployees();
   }, []);
 
-  // 2. Remove User Function
-  const removeUser = async (id) => {
+  const removeUser = async (id, e) => {
+    e.stopPropagation(); 
     if (window.confirm("Are you sure you want to remove this employee?")) {
       try {
         await API.delete(`/admin/users/${id}`);
-        // Update UI by filtering out the deleted user using _id (MongoDB default)
         setUsers(users.filter(user => user._id !== id));
       } catch (error) {
         console.error("Error removing user:", error);
-        alert("Failed to delete user. Check permissions.");
+        alert("Failed to delete user.");
       }
     }
   };
 
-  // 3. Callback to refresh list after adding new employee
   const handleUserAdded = () => {
     setShowAddModal(false);
-    fetchEmployees(); // Refresh the list
+    fetchEmployees(); 
   };
 
-  if (loading) return <div className="p-10 text-center font-bold">Loading Team Records...</div>;
+  if (loading) return <div className="p-10 text-center font-bold text-slate-400 animate-pulse">Loading Team Records...</div>;
 
   return (
     <div className="p-4 md:p-10 bg-slate-50 min-h-screen">
@@ -71,9 +84,9 @@ const AdminDashboard = () => {
               <thead>
                 <tr className="bg-slate-50/50 border-b border-slate-100">
                   <th className="p-5 text-xs font-bold text-slate-400 uppercase tracking-widest">Employee Info</th>
+                  <th className="p-5 text-xs font-bold text-slate-400 uppercase tracking-widest">Demographics</th>
                   <th className="p-5 text-xs font-bold text-slate-400 uppercase tracking-widest">Role & Details</th>
                   <th className="p-5 text-xs font-bold text-slate-400 uppercase tracking-widest">Salary</th>
-                  <th className="p-5 text-xs font-bold text-slate-400 uppercase tracking-widest">Attendance</th>
                   <th className="p-5 text-xs font-bold text-slate-400 uppercase tracking-widest text-center">Actions</th>
                 </tr>
               </thead>
@@ -82,36 +95,43 @@ const AdminDashboard = () => {
                   <tr><td colSpan="5" className="p-10 text-center text-slate-400">No employees found.</td></tr>
                 ) : (
                   users.map((user) => (
-                    <tr key={user._id} className="hover:bg-slate-50/80 transition-colors group">
+                    <tr 
+                      key={user._id} 
+                      onClick={() => setSelectedUser(user)} 
+                      className="hover:bg-slate-50/80 transition-colors group cursor-pointer"
+                    >
                       <td className="p-5">
                         <div className="flex items-center gap-4">
-                          {/* Use a placeholder if no image exists */}
-                          <div className="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center font-bold text-indigo-600 border-2 border-white shadow-sm">
-                            {user.name?.charAt(0)}
-                          </div>
+                          {/* Updated to check for profilePicture (User Schema) or profilePic (Admin Schema) */}
+                          <img 
+                            src={user.profilePicture || user.profilePic || `https://ui-avatars.com/api/?name=${user.name || user.organizationName}&background=EEF2FF&color=4F46E5`} 
+                            alt="profile" 
+                            className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm"
+                          />
                           <div>
-                            <div className="font-bold text-slate-800">{user.name}</div>
+                            <div className="font-bold text-slate-800">{user.name || user.organizationName}</div>
                             <div className="text-xs text-slate-500">{user.email}</div>
                           </div>
                         </div>
                       </td>
+                      {/* NEW: Demographics Column */}
                       <td className="p-5">
-                        <div className="text-sm font-bold text-slate-700">{user.position}</div>
-                        <div className="text-xs text-indigo-500 font-medium uppercase tracking-tighter">{user.phoneNumber}</div>
-                      </td>
-                      <td className="p-5">
-                        <div className="text-sm font-black text-slate-800">₹{user.salary}</div>
-                        <div className="text-[10px] text-slate-400 font-bold uppercase">{user.address}</div>
-                      </td>
-                      <td className="p-5">
-                        <div className="flex items-center gap-2">
-                          <span className="px-2 py-1 bg-green-50 text-green-600 rounded-md text-xs font-bold">P: {user.presentDays}</span>
-                          <span className="px-2 py-1 bg-red-50 text-red-600 rounded-md text-xs font-bold">A: {user.absentDays}</span>
+                        <div className="flex flex-col">
+                          <span className="text-sm font-semibold text-slate-700">{user.gender || "N/A"}</span>
+                          <span className="text-xs text-slate-400">{user.age ? `${user.age} yrs` : "Age not set"}</span>
                         </div>
+                      </td>
+                      <td className="p-5">
+                        <div className="text-sm font-bold text-slate-700">{user.position || "Admin Role"}</div>
+                        <div className="text-xs text-indigo-500 font-medium">{user.phoneNumber || "No Phone"}</div>
+                      </td>
+                      <td className="p-5">
+                        <div className="text-sm font-black text-slate-800">₹{user.salary?.toLocaleString() || 0}</div>
+                        <div className="text-[10px] text-slate-400 font-bold uppercase truncate max-w-[150px]">{user.address || "No Address"}</div>
                       </td>
                       <td className="p-5 text-center">
                         <button 
-                          onClick={() => removeUser(user._id)}
+                          onClick={(e) => removeUser(user._id, e)}
                           className="p-2 text-slate-300 hover:text-red-500 transition-colors"
                           title="Remove User"
                         >
@@ -129,7 +149,14 @@ const AdminDashboard = () => {
         </div>
       </div>
 
-      {/* --- RENDER THE REGISTRATION MODAL --- */}
+      {selectedUser && (
+        <EmployeeDetailView 
+          user={selectedUser} 
+          onClose={() => setSelectedUser(null)} 
+          isDashboardView={true} 
+        />
+      )}
+
       {showAddModal && (
         <AdminUserRegistration 
           onClose={() => setShowAddModal(false)} 

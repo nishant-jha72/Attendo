@@ -45,6 +45,19 @@ const userSchema = new Schema(
             type: Number,
             default: 0
         },
+        attendanceHistory: [
+        {
+            date: {
+                type: Date,
+                default: Date.now
+            },
+            status: {
+                type: String,
+                enum: ["Present", "Late"],
+                default: "Present"
+              }
+        }
+        ],
         absentDays: {
             type: Number,
             default: 0

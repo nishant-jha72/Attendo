@@ -23,7 +23,6 @@ const UserLogin = () => {
     setError('');
     
     try {
-      // 2. Call your actual backend endpoint for user login
       const response = await API.post('/users/login', {
         email: formData.email,
         password: formData.password

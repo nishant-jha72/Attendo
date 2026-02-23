@@ -13,9 +13,11 @@ const ProtectedRoute = ({ children, allowedRole }) => {
         return <Navigate to={loginPath} state={{ from: location }} replace />;
     }
 
+    // Role-Based Access Control (RBAC)
     if (allowedRole && userRole !== allowedRole) {
-        // If an employee tries to access /admin-dashboard, send them home
-        return <Navigate to="/" replace />;
+        // Redirect to their respective dashboard if they try to cross over
+        const fallbackPath = userRole === 'admin' ? '/admin-dashboard' : '/user-dashboard';
+        return <Navigate to={fallbackPath} replace />;
     }
 
     return children;

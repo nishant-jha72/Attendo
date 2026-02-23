@@ -32,17 +32,20 @@ const loginUser = asyncHandler(async (req, res) => {
 
 // --- Mark Attendance ---
 const markAttendance = asyncHandler(async (req, res) => {
-    // In a real app, req.user._id comes from verifyJWT middleware
-    const user = await User.findById(req.user?._id);
-    
-    if (!user) throw new ApiError(404, "User not found");
+    const user = await User.findById(req.user._id);
+   const today = new Date().setHours(0, 0, 0, 0);
+const alreadyMarked = user.attendanceHistory.some(
+    record => new Date(record.date).setHours(0, 0, 0, 0) === today
+);
 
-    user.presentDays += 1;
-    await user.save({ validateBeforeSave: false });
+if (alreadyMarked) {
+    res.status(400).json(new ApiResponse(400, {}, "Attendance already marked for today"));
+    return;
+}
 
-    return res.status(200).json(
-        new ApiResponse(200, { presentDays: user.presentDays }, "Attendance marked!")
-    );
+user.attendanceHistory.push({ date: new Date() });
+user.presentDays += 1;
+await user.save();
 });
 
 // --- Change Password ---
@@ -71,5 +74,9 @@ const logoutUser = asyncHandler(async (req, res) => {
     return res.status(200).json(new ApiResponse(200, {}, "User logged out successfully"));
 });  
 
+const getMyProfile = asyncHandler(async (req, res) => {
+    const user = await User.findById(req.user._id).select("-password");
+    return res.status(200).json(new ApiResponse(200, user, "Profile fetched"));
+});
 
-export { loginUser, markAttendance, updateUserPassword, logoutUser };
+export { loginUser, markAttendance, updateUserPassword, logoutUser  , getMyProfile};

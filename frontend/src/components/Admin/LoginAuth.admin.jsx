@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import API from '../../api/axios'; // Import the central axios instance
+import API from '../../api/axios';
 
 const AdminAuth = () => {
   const navigate = useNavigate();
@@ -8,19 +8,32 @@ const AdminAuth = () => {
   const params = new URLSearchParams(location.search);
   const isLogin = params.get('mode') !== 'register';
 
-  // State for form inputs
   const [formData, setFormData] = useState({
     organizationName: '',
     email: '',
-    password: ''
+    password: '',
+    salary: '',
+    gender: '',
+    age: ''
   });
+  const [profilePic, setProfilePic] = useState(null);
+  const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
-const [success, setSuccess] = useState('');
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setProfilePic(file);
+      setPreview(URL.createObjectURL(file)); // Create a local preview URL
+    }
+  };
+
   const handleAdminSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -29,52 +42,46 @@ const [success, setSuccess] = useState('');
     
     try {
       if (isLogin) {
-        // --- LOGIN ---
+        // --- LOGIN (Standard JSON) ---
         const response = await API.post('/admin/login', {
           email: formData.email,
           password: formData.password
         });
 
-        // Capture the message from your ApiResponse class (e.g., "Admin logged in successfully")
-        const successMsg = response.data?.message || "Login Successful!";
-        setSuccess(successMsg);
-
+        setSuccess(response.data?.message || "Login Successful!");
         localStorage.setItem('userRole', 'admin');
         localStorage.setItem('isLoggedIn', 'true');
 
-        // Delay navigation slightly so the user can actually see the success message
-        setTimeout(() => {
-            navigate('/admin-dashboard');
-        }, 1500);
+        setTimeout(() => navigate('/admin-dashboard'), 1500);
 
       } else {
-        // --- REGISTRATION ---
-        const response = await API.post('/admin/register', {
-          organizationName: formData.organizationName,
-          email: formData.email,
-          password: formData.password
+        // --- REGISTRATION (Using FormData for Image Upload) ---
+        const data = new FormData();
+        data.append("organizationName", formData.organizationName);
+        data.append("email", formData.email);
+        data.append("password", formData.password);
+        data.append("salary", formData.salary);
+        data.append("gender", formData.gender);
+        data.append("age", formData.age);
+        data.append("profilePic", profilePic); // Key must match req.file field name in backend
+
+        const response = await API.post('/admin/register', data, {
+          headers: { "Content-Type": "multipart/form-data" }
         });
 
-        // Display the actual message from the backend (e.g., "Organization registered successfully")
         setSuccess(response.data?.message || "Registration successful!");
         
-        // Switch to login mode after 2 seconds
         setTimeout(() => {
             navigate('/admin-auth?mode=login');
             setSuccess('');
         }, 2000);
       }
     } catch (err) {
-      console.error("Auth Error:", err);
-      
-      // This captures the 'message' you throw in your ApiError class on the backend
-      const errorMessage = err.response?.data?.message || "Something went wrong. Please try again.";
-      setError(errorMessage);
-
+      setError(err.response?.data?.message || "Something went wrong.");
     } finally {
       setLoading(false);
     }
-};
+  };
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-slate-50 p-6">
@@ -83,46 +90,78 @@ const [success, setSuccess] = useState('');
           {isLogin ? 'Admin Login' : 'Admin Register'}
         </h2>
 
-        {error && (
-          <div className="mb-4 p-3 bg-red-50 text-red-600 text-sm font-bold rounded-xl text-center">
-            {error}
+        {(error || success) && (
+          <div className={`mb-4 p-3 text-sm font-bold rounded-xl text-center ${error ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'}`}>
+            {error || success}
           </div>
         )}
         
         <form onSubmit={handleAdminSubmit} className="space-y-4">
           {!isLogin && (
-            <input 
-              type="text" 
-              name="organizationName"
-              placeholder="Organization Name" 
-              className="w-full p-3 rounded-xl border border-slate-200 bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none" 
-              value={formData.organizationName}
-              onChange={handleInputChange}
-              required 
-            />
+            <>
+              {/* Profile Pic Upload & Preview */}
+              <div className="flex flex-col items-center gap-3 mb-2">
+                <div className="w-20 h-20 rounded-full bg-slate-100 border-2 border-dashed border-indigo-300 flex items-center justify-center overflow-hidden">
+                  {preview ? (
+                    <img src={preview} alt="preview" className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-[10px] text-slate-400 text-center px-2">Upload Photo</span>
+                  )}
+                </div>
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  onChange={handleFileChange} 
+                  className="text-xs text-slate-500 file:mr-4 file:py-1 file:px-2 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer"
+                  required={!isLogin}
+                />
+              </div>
+
+              <input 
+                type="text" name="organizationName" placeholder="Organization Name" 
+                className="w-full p-3 rounded-xl border border-slate-200 bg-slate-50 outline-none" 
+                value={formData.organizationName} onChange={handleInputChange} required 
+              />
+              
+              <div className="flex gap-2">
+                <input 
+                  type="number" name="age" placeholder="Age" 
+                  className="w-1/3 p-3 rounded-xl border border-slate-200 bg-slate-50 outline-none" 
+                  value={formData.age} onChange={handleInputChange} required 
+                />
+                <select 
+                  name="gender" 
+                  className="w-2/3 p-3 rounded-xl border border-slate-200 bg-slate-50 outline-none"
+                  value={formData.gender} onChange={handleInputChange} required
+                >
+                  <option value="">Select Gender</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
+              <input 
+                type="number" name="salary" placeholder="Salary (Monthly)" 
+                className="w-full p-3 rounded-xl border border-slate-200 bg-slate-50 outline-none" 
+                value={formData.salary} onChange={handleInputChange} required 
+              />
+            </>
           )}
+
           <input 
-            type="email" 
-            name="email"
-            placeholder="Admin Email" 
-            className="w-full p-3 rounded-xl border border-slate-200 bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none" 
-            value={formData.email}
-            onChange={handleInputChange}
-            required 
+            type="email" name="email" placeholder="Admin Email" 
+            className="w-full p-3 rounded-xl border border-slate-200 bg-slate-50 outline-none" 
+            value={formData.email} onChange={handleInputChange} required 
           />
           <input 
-            type="password" 
-            name="password"
-            placeholder="Password" 
-            className="w-full p-3 rounded-xl border border-slate-200 bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none" 
-            value={formData.password}
-            onChange={handleInputChange}
-            required 
+            type="password" name="password" placeholder="Password" 
+            className="w-full p-3 rounded-xl border border-slate-200 bg-slate-50 outline-none" 
+            value={formData.password} onChange={handleInputChange} required 
           />
           
           <button 
-            type="submit" 
-            disabled={loading}
+            type="submit" disabled={loading}
             className="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-700 shadow-lg transition-all active:scale-95 disabled:bg-slate-400"
           >
             {loading ? 'Processing...' : (isLogin ? 'Sign In' : 'Create Admin Account')}
@@ -134,6 +173,7 @@ const [success, setSuccess] = useState('');
             type="button"
             onClick={() => {
               setError('');
+              setSuccess('');
               navigate(isLogin ? '/admin-auth?mode=register' : '/admin-auth?mode=login');
             }}
             className="text-sm font-semibold text-slate-500 hover:text-indigo-600 transition"
