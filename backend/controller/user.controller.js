@@ -3,7 +3,7 @@ import { ApiError } from "../utils/ApiError.util.js";
 import { ApiResponse } from "../utils/ApiResponse.utils.js";
 import { User } from "../models/user.model.js";
 import { TopologyDescriptionChangedEvent } from "mongodb";
-
+import { sendPassowrdEmail , passwordUpdatedEmail} from "../utils/sendEmails.js";
 // --- User Login ---
 const loginUser = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
@@ -60,9 +60,12 @@ const updateUserPassword = asyncHandler(async (req, res) => {
     user.password = newPassword;
     await user.save({ validateBeforeSave: false });
 
+    await passwordUpdatedEmail(user.email);
     return res.status(200).json(
         new ApiResponse(200, {}, "Password changed successfully")
     );
+
+
 });
 
 const logoutUser = asyncHandler(async (req, res) => {

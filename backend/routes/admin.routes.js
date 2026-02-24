@@ -6,7 +6,8 @@ import {
     verifyEmail ,
     logoutAdmin,
     getAllEmployees,
-    getMyProfile
+    getMyProfile,
+    removeEmployee
     // Note: You should also add a loginAdmin controller
 } from "../controller/admin.controller.js";
 import { upload } from "../middleware/multer.middleware.js";
@@ -29,5 +30,5 @@ router.route("/add-employee").post(
     registerEmployee
 );
 router.route("/verify-email/:token").get(verifyEmail);
-
+router.route("/users/:id").delete(verifyJWT, removeEmployee);
 export default router;

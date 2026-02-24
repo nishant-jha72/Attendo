@@ -49,3 +49,24 @@ export const sendPassowrdEmail = async (email, password) => {
     });
 };
 
+export const passwordUpdatedEmail = async (email) => {
+
+    const transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASS
+        }
+    });
+
+    await transporter.sendMail({
+        from: process.env.EMAIL_USER,
+        to: email,
+        subject: "Your Password Has Been Updated",
+        html: `
+            <h2>Password Updated</h2>
+            <p>Your password has been successfully updated. If you did not make this change, please contact support immediately.</p>
+            <h3> Attendo :- An Employee Management System </h3>
+        `
+    });
+};

@@ -207,4 +207,19 @@ const generatePassword = (length = 8) => {
 
   return password;
 };
-export { registerAdmin, registerEmployee, loginAdmin, verifyEmail, logoutAdmin , getAllEmployees , getMyProfile};
+
+const removeEmployee = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+
+    const employee = await User.findById(id);
+    if (!employee) {
+        throw new ApiError(404, "Employee not found");
+    }
+
+    await User.findByIdAndDelete(id);
+
+    return res.status(200).json(
+        new ApiResponse(200, {}, "Employee removed successfully")
+    );
+});
+export { registerAdmin, registerEmployee, loginAdmin, verifyEmail, logoutAdmin , getAllEmployees , getMyProfile , removeEmployee};
