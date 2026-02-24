@@ -6,9 +6,9 @@ import { TopologyDescriptionChangedEvent } from "mongodb";
 import { sendPassowrdEmail , passwordUpdatedEmail} from "../utils/sendEmails.js";
 // --- User Login ---
 const loginUser = asyncHandler(async (req, res) => {
-    const { email, password } = req.body;
+    const { userName, password } = req.body;
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ userName });
     if (!user) throw new ApiError(404, "User does not exist");
 
     const isPasswordValid = await user.isPasswordCorrect(password);

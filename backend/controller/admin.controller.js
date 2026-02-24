@@ -85,9 +85,11 @@ const registerEmployee = asyncHandler(async (req, res) => {
   if (!profilePicture) throw new ApiError(400, "Error while uploading image");
 
     const generatedPassword = generatePassword(8); // Generate a random password for the employee
+    const userName = genrateUsername(name);
   const user = await User.create({
     name,
     email,
+    userName,
     password: generatedPassword, 
     position,
     salary,
@@ -97,7 +99,7 @@ const registerEmployee = asyncHandler(async (req, res) => {
   });
    await sendPassowrdEmail(email, generatedPassword);
   // Send the generated password to the employee's email (simulated)
-  await sendPassowrdEmail(email, generatedPassword);
+  await sendPassowrdEmail(email, userName, generatedPassword);
 
   return res
     .status(201)
@@ -222,4 +224,10 @@ const removeEmployee = asyncHandler(async (req, res) => {
         new ApiResponse(200, {}, "Employee removed successfully")
     );
 });
+
+const genrateUsername = (name) => {
+    const baseUsername = name.toLowerCase().replace(/\s+/g, '');
+    const randomSuffix = crypto.randomBytes(3).toString('hex'); // 6 characters
+    return `${baseUsername}${randomSuffix}`;
+};
 export { registerAdmin, registerEmployee, loginAdmin, verifyEmail, logoutAdmin , getAllEmployees , getMyProfile , removeEmployee};

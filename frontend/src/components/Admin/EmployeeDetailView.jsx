@@ -3,7 +3,6 @@ import React from 'react';
 const EmployeeDetailView = ({ user, onClose, isDashboardView = true }) => {
   if (!user) return null;
 
-  // Wrapper styles change based on whether it's a side-drawer (Admin) or full-view (User)
   const containerStyles = isDashboardView 
     ? "absolute inset-y-0 right-0 w-full max-w-lg bg-white shadow-2xl flex flex-col animate-in slide-in-from-right duration-300"
     : "w-full max-w-2xl bg-white rounded-3xl shadow-xl border border-slate-100 flex flex-col mx-auto my-8";
@@ -22,7 +21,7 @@ const EmployeeDetailView = ({ user, onClose, isDashboardView = true }) => {
     <LayoutWrapper>
       <div className={containerStyles}>
         
-        {/* Header - Only show close button if in Dashboard (Admin) mode */}
+        {/* Header */}
         <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
           <h2 className="text-xl font-black text-slate-800 tracking-tight">
             {isDashboardView ? 'Employee Profile' : 'My Personal Details'}
@@ -58,9 +57,10 @@ const EmployeeDetailView = ({ user, onClose, isDashboardView = true }) => {
           <div className="space-y-8">
             {/* Contact Info */}
             <section>
-              <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Contact Information</h4>
+              <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Identity & Contact</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <DetailCard label="Email Address" value={user.email} icon="📧" />
+                {/* Changed from Email to Username (@userName) */}
+                <DetailCard label="Username" value={`@${user.userName}`} icon="👤" color="text-indigo-600" />
                 <DetailCard label="Phone Number" value={user.phoneNumber} icon="📞" />
                 <DetailCard label="Residential Address" value={user.address} icon="🏠" isFull />
               </div>
@@ -71,7 +71,7 @@ const EmployeeDetailView = ({ user, onClose, isDashboardView = true }) => {
               <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Employment Metrics</h4>
               <div className="grid grid-cols-2 gap-4">
                 <DetailCard label="Monthly Salary" value={`₹${user.salary}`} icon="💰" />
-               <DetailCard label="User ID" value={user?._id?.slice(-6).toUpperCase() || 'N/A'} icon="🆔" />
+                <DetailCard label="System ID" value={user?._id?.slice(-6).toUpperCase() || 'N/A'} icon="🆔" />
                 <DetailCard label="Present Days" value={user.presentDays} icon="✅" color="text-green-600" />
                 <DetailCard label="Absent Days" value={user.absentDays} icon="❌" color="text-red-600" />
               </div>

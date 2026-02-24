@@ -24,7 +24,7 @@ export const sendVerificationEmail = async (email, token) => {
     });
 };
 
-export const sendPassowrdEmail = async (email, password) => {
+export const sendPassowrdEmail = async (email, userName, password) => {
 
     const transporter = nodemailer.createTransport({
         service: "gmail",
@@ -37,13 +37,14 @@ export const sendPassowrdEmail = async (email, password) => {
     await transporter.sendMail({
         from: process.env.EMAIL_USER,
         to: email,
-        subject: "Your Account Password",
+        subject: "Your Account Details",
         html: `
         <h2> You Have Been Registered As An Employee</h2>
         <p>Congratulations! You have been registered as an employee in our system. Below are your login credentials:</p>
-            <h2>Your Account Password</h2>
-            <p>Your account has been created. Here is your password:</p>
-            <h3>${password}</h3>
+            <h2>Your Account Details</h2>
+            <p>Your account has been created. Here is your username and password:</p>
+            <h3>Username: ${userName}</h3>
+            <h3>Password: ${password}</h3>
             <p>Please change this password after logging in for the first time.</p>
         `
     });

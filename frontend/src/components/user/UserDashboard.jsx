@@ -95,7 +95,8 @@ const UserDashboard = () => {
           </div>
           <div className="text-center md:text-left flex-grow">
             <h1 className="text-2xl font-black text-slate-800">My Workspace</h1>
-            <p className="text-slate-500 text-sm font-medium">Hello, <span className="text-indigo-600 font-bold">{userData.name}</span></p>
+            {/* Displaying Name and Username */}
+            <p className="text-slate-500 text-sm font-medium">Hello, <span className="text-indigo-600 font-bold">{userData.name}</span> (@{userData.userName})</p>
             <button onClick={() => setShowPasswordModal(true)} className="mt-1 text-[10px] font-bold text-slate-400 hover:text-indigo-600 transition uppercase tracking-wider">Update Password</button>
           </div>
           
@@ -121,11 +122,12 @@ const UserDashboard = () => {
                 <div><p className="text-[10px] text-slate-400 font-bold uppercase">Role</p><p className="text-sm font-bold text-slate-700">{userData.position}</p></div>
                 <div><p className="text-[10px] text-slate-400 font-bold uppercase">Phone</p><p className="text-sm font-bold text-slate-700">{userData.phoneNumber}</p></div>
                 <div><p className="text-[10px] text-slate-400 font-bold uppercase">Salary</p><p className="text-sm font-bold text-green-600">₹{userData.salary}</p></div>
-                <div><p className="text-[10px] text-slate-400 font-bold uppercase">Email</p><p className="text-sm font-bold text-slate-700 truncate">{userData.email}</p></div>
+                {/* Changed Email to Username here */}
+                <div><p className="text-[10px] text-slate-400 font-bold uppercase">Username</p><p className="text-sm font-bold text-indigo-500 truncate">@{userData.userName}</p></div>
               </div>
             </div>
 
-            {/* Compact Calendar Card */}
+            {/* Calendar Card (Unchanged logic, just display) */}
             <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-200">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-[10px] font-bold text-slate-800 uppercase tracking-widest">
@@ -158,7 +160,7 @@ const UserDashboard = () => {
             </div>
           </div>
 
-          {/* Right Column: Overview Card */}
+          {/* Right Column: Overview Card (Unchanged) */}
           <div className="bg-indigo-600 rounded-3xl p-8 text-white shadow-xl shadow-indigo-100 h-fit sticky top-24">
             <h3 className="text-[10px] font-bold opacity-70 uppercase tracking-widest mb-8">Attendance Overview</h3>
             <div className="space-y-8">
@@ -181,7 +183,7 @@ const UserDashboard = () => {
         </div>
       </div>
 
-      {/* --- PASSWORD MODAL --- */}
+      {/* --- PASSWORD MODAL (Unchanged) --- */}
       {showPasswordModal && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[110] p-4">
           <div className="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl">
