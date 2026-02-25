@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 const FaceSchema = new mongoose.Schema({
-  email: {
+  userName: {
     type: String,
     required: true,
     unique: true,
@@ -10,6 +10,6 @@ const FaceSchema = new mongoose.Schema({
     type: [Number],
     required: true,
   },
-});
+} , { timestamps: true });
 
 module.exports = mongoose.model("Face", FaceSchema);

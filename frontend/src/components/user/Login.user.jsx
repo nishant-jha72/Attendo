@@ -1,41 +1,36 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Webcam from 'react-webcam';
-import API from '../../api/axios';
+import API from '../../api/axios';       // Main Backend (Passwords)
+import faceAPI from '../../api/faceApi'; // Face Service (AI)
 
 const UserLogin = () => {
   const navigate = useNavigate();
   const webcamRef = useRef(null);
 
-  // View States: 'face' or 'password'
   const [loginMode, setLoginMode] = useState('face'); 
-  
-  // Form States
   const [userName, setUserName] = useState('');
   const [password, setPassword] = useState('');
   const [imageFile, setImageFile] = useState(null);
   const [preview, setPreview] = useState(null);
-  
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // --- FACE LOGIC: Convert Base64 to Raw File ---
-  const makeFile = (base64) => {
-    fetch(base64)
-      .then(res => res.blob())
-      .then(blob => {
-        const file = new File([blob], "capture.jpg", { type: "image/jpeg" });
-        setImageFile(file);
-      });
-  };
-
-  const capture = useCallback(() => {
+  // --- IMPROVED FACE LOGIC: Async File Creation ---
+  const capture = useCallback(async () => {
     const imageSrc = webcamRef.current.getScreenshot();
+    if (!imageSrc) return;
+    
     setPreview(imageSrc);
-    makeFile(imageSrc);
+
+    // Convert Base64 to File object immediately to ensure it's ready for upload
+    const res = await fetch(imageSrc);
+    const blob = await res.blob();
+    const file = new File([blob], "capture.jpg", { type: "image/jpeg" });
+    setImageFile(file);
   }, [webcamRef]);
 
-  // --- SUBMIT LOGIC ---
+  // --- UPDATED SUBMIT LOGIC ---
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -44,27 +39,48 @@ const UserLogin = () => {
     try {
       let response;
       
-      if (loginMode === 'face') {
-        const formData = new FormData();
-        formData.append('userName', userName);
-        formData.append('photo', imageFile);
-        response = await API.post('/users/face-login', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' }
+     if (loginMode === 'face') {
+    const formData = new FormData();
+    formData.append('userName', userName);
+    formData.append('image', imageFile);
+
+    // 1. Ask Face Service: "Is this the right person?"
+    const faceRes = await faceAPI.post('/verify', formData);
+
+    if (faceRes.data.success) {
+        // 2. Ask Main Backend: "Face is okay, now give me my login tokens"
+        const finalResponse = await API.post('/users/face-login-finalize', { 
+            userName: faceRes.data.userName 
         });
-      } else {
+
+        // 3. Save details and navigate
+        localStorage.setItem('userName', finalResponse.data.data.user.name);
+        localStorage.setItem('userRole', 'user');
+        localStorage.setItem('isLoggedIn', 'true');
+        
+        navigate('/user-dashboard');
+        window.location.reload();
+    }
+} else {
+        // Main backend for password login
         response = await API.post('/users/login', { userName, password });
       }
 
-      // Handle Success
+      // --- HANDLE SUCCESS ---
       localStorage.setItem('userRole', 'user');
       localStorage.setItem('isLoggedIn', 'true');
-      if (response.data?.data?.user?.name) {
-        localStorage.setItem('userName', response.data.data.user.name);
+      
+      // Note: Adjust the path response.data... based on your backend return structure
+      const user = response.data?.data?.user || response.data?.user;
+      if (user?.name) {
+        localStorage.setItem('userName', user.name);
       }
       
       navigate('/user-dashboard');
       window.location.reload();
+      
     } catch (err) {
+      // Catch specific messages from Face Service (e.g., "Face not match")
       setError(err.response?.data?.message || "Authentication failed");
       setPreview(null);
       setImageFile(null);
@@ -126,7 +142,7 @@ const UserLogin = () => {
 
               <button 
                 type="button" 
-                onClick={preview ? () => setPreview(null) : capture}
+                onClick={preview ? () => { setPreview(null); setImageFile(null); } : capture}
                 className="w-full py-4 rounded-2xl font-bold bg-slate-800 text-white hover:bg-slate-700 transition shadow-lg"
               >
                 {preview ? "🔄 Retake Photo" : "📸 Capture Face"}
@@ -156,7 +172,7 @@ const UserLogin = () => {
           </button>
         </form>
 
-        {/* --- TOGGLE BUTTON AT THE BOTTOM --- */}
+        {/* --- TOGGLE BUTTON --- */}
         <div className="mt-8 pt-6 border-t border-slate-100">
           <button 
             type="button"
@@ -164,6 +180,7 @@ const UserLogin = () => {
               setLoginMode(loginMode === 'face' ? 'password' : 'face');
               setError('');
               setPreview(null);
+              setImageFile(null);
             }}
             className="w-full flex items-center justify-center gap-2 text-indigo-600 font-bold text-sm hover:bg-indigo-50 py-3 rounded-xl transition-all"
           >

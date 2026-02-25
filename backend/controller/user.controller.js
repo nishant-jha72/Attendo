@@ -82,4 +82,31 @@ const getMyProfile = asyncHandler(async (req, res) => {
     return res.status(200).json(new ApiResponse(200, user, "Profile fetched"));
 });
 
-export { loginUser, markAttendance, updateUserPassword, logoutUser  , getMyProfile};
+const finalizeFaceLogin = asyncHandler(async (req, res) => {
+    const { userName } = req.body;
+
+    // 1. Find user in the MAIN database
+    const user = await User.findOne({ userName });
+    if (!user) {
+        throw new ApiError(404, "User no longer exists in main database");
+    }
+
+    // 2. Generate Tokens (using your existing logic)
+    const accessToken = user.generateAccessToken();
+    const refreshToken = user.generateRefreshToken();
+
+    const options = {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'None',
+        maxAge: 24 * 60 * 60 * 1000
+    };
+
+    return res
+        .status(200)
+        .cookie("accessToken", accessToken, options)
+        .cookie("refreshToken", refreshToken, options)
+        .json(new ApiResponse(200, { user, accessToken }, "Login successful via Face ID"));
+});
+
+export { loginUser, markAttendance, updateUserPassword, logoutUser  , getMyProfile , finalizeFaceLogin};

@@ -6,6 +6,10 @@ import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.utils.js";
 import crypto from "crypto";
 import { sendVerificationEmail  , sendPassowrdEmail} from "../utils/sendEmails.js"; 
+import axios from "axios";
+import FormData from "form-data";
+import fs from "fs";
+
 
 const registerAdmin = asyncHandler(async (req, res) => {
     // 1. Get details from body (including new fields)
@@ -67,45 +71,63 @@ const registerAdmin = asyncHandler(async (req, res) => {
 
 
 const registerEmployee = asyncHandler(async (req, res) => {
-  // 1. Get details from body
-  const { name, email, position, salary, address, phoneNumber, password } =
-    req.body;
+  const { name, email, position, salary, address, phoneNumber } = req.body;
 
-  // 2. Validation
-  if (!name || !email || !password)
-    throw new ApiError(400, "Name, Email, and Password are required");
+  if (!name || !email) throw new ApiError(400, "Name and Email are required");
+  
   const existingUser = await User.findOne({ email });
-  if (existingUser)
-    throw new ApiError(409, "User with this email already exists");
+  if (existingUser) throw new ApiError(409, "User already exists");
+
   const profilePicLocalPath = req.file?.path;
-  if (!profilePicLocalPath)
-    throw new ApiError(400, "Profile picture is required");
-  console.log("Received file:", profilePicLocalPath);
+  if (!profilePicLocalPath) throw new ApiError(400, "Profile picture is required");
+
+  // 1. Upload to Cloudinary
+  // IMPORTANT: Ensure your uploadOnCloudinary function does NOT delete the file yet.
   const profilePicture = await uploadOnCloudinary(profilePicLocalPath);
   if (!profilePicture) throw new ApiError(400, "Error while uploading image");
 
-    const generatedPassword = generatePassword(8); // Generate a random password for the employee
+  // 2. Register in Face-Service (While file still exists locally)
+   const generatedPassword = generatePassword(8);
     const userName = genrateUsername(name);
+  try {
+    const faceFormData = new FormData();
+    faceFormData.append("userName", userName); 
+    faceFormData.append("image", fs.createReadStream(profilePicLocalPath));
+
+    await axios.post(process.env.FACE_API_URL + "/register", faceFormData, {
+      headers: { ...faceFormData.getHeaders() },
+    });
+    console.log("✅ Face-Service Sync Successful");
+  } catch (faceErr) {
+    console.error("❌ Face-Service Registration Failed:", faceErr.message);
+    // Log the error but continue, or throw error if face recognition is required.
+  }
+
+  // 3. Delete the local file manually now that both services are done
+  if (fs.existsSync(profilePicLocalPath)) {
+    fs.unlinkSync(profilePicLocalPath);
+  }
+
+  // 4. Create User in Main DB
+ 
+
   const user = await User.create({
     name,
     email,
     userName,
-    password: generatedPassword, 
+    password: generatedPassword,
     position,
     salary,
     address,
     phoneNumber,
     profilePicture: profilePicture.url,
   });
-   await sendPassowrdEmail(email, generatedPassword);
-  // Send the generated password to the employee's email (simulated)
+
   await sendPassowrdEmail(email, userName, generatedPassword);
 
-  return res
-    .status(201)
-    .json(
-      new ApiResponse(201, user, "Employee registered successfully by Admin"),
-    );
+  return res.status(201).json(
+    new ApiResponse(201, user, "Employee registered successfully")
+  );
 });
 
 const loginAdmin = asyncHandler(async (req, res) => {

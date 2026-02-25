@@ -2,8 +2,10 @@ require('dotenv').config(); // MUST be the first line
 const express = require('express');
 const connectDB = require('./config/db');
 const faceRoutes = require('./routes/FaceRoutes');
+const cors = require('cors');
 
 const app = express();
+app.use(cors()); // Enable CORS for all routes
 
 // Connect to the DB using the variable in .env
 connectDB();
