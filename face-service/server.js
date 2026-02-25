@@ -5,7 +5,9 @@ const faceRoutes = require('./routes/FaceRoutes');
 const cors = require('cors');
 
 const app = express();
-app.use(cors()); // Enable CORS for all routes
+app.use(cors({
+    origin: process.env.VITE_APP_FACE_API_URL || 'http://localhost:5173', // Allow all origins (for development; restrict in production)
+})); // Enable CORS for all routes
 
 // Connect to the DB using the variable in .env
 connectDB();
