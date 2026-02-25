@@ -13,6 +13,9 @@ connectDB();
 app.use(express.json({ limit: '10mb' }));
 
 // Routes
+app.get('/', (req, res) => {
+  res.send('Welcome to the Face Service API');
+});
 app.use('/api/face', faceRoutes);
 
 const PORT = process.env.PORT || 5001;
